@@ -1,0 +1,16 @@
+# Acme Corporation Employee Handbook (2024-2025)
+
+## 1. Remote Work and Flexible Hours Policy
+Employees in good standing are eligible to work remotely up to three (3) days per week with manager approval. Core collaboration hours are 10:00 AM to 3:00 PM Eastern Time. All employees must be accessible via Slack and email during these core hours.
+
+## 2. Paid Time Off (PTO) and Vacation
+Full-time employees accrue 20 days of paid vacation per calendar year. Up to 5 unused vacation days may be rolled over into the following year, expiring on March 31st. Any rollover requests exceeding 5 days require written approval from the Head of People Operations.
+
+## 3. Sick Leave and Health Days
+Employees receive 10 paid sick days per year, separate from vacation PTO. Sick leave may be used for personal illness, medical appointments, or caring for immediate family members. Absences exceeding three consecutive working days require a signed doctor's medical note.
+
+## 4. Hardware and Equipment Stipend
+New hires receive a company-issued laptop and a one-time home office equipment stipend of $750. Eligible purchases include monitors, ergonomic chairs, desks, and peripheral accessories. Receipts must be submitted within 60 days of hire.
+
+## 5. Information Security and Confidentiality
+Employees must use multi-factor authentication (MFA) on all corporate accounts. Proprietary source code and customer data must never be stored on unencrypted personal devices. In the event of a suspected security breach or lost device, the IT Security response team must be alerted immediately via security@acmecorp.internal.
