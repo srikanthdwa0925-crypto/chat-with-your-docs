@@ -1,5 +1,5 @@
 // src/lib/ai/embeddingService.ts
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 
 export interface EmbeddingOptions {
@@ -10,7 +10,7 @@ export interface EmbeddingOptions {
 
 export class EmbeddingService {
   private provider: 'gemini' | 'openai';
-  private geminiClient: GoogleGenerativeAI | null = null;
+  private geminiClient: GoogleGenAI | null = null;
   private openaiClient: OpenAI | null = null;
   private modelName: string;
 
@@ -27,9 +27,9 @@ export class EmbeddingService {
     } else {
       const apiKey = process.env.GEMINI_API_KEY;
       if (apiKey && apiKey !== 'placeholder-gemini-key') {
-        this.geminiClient = new GoogleGenerativeAI(apiKey);
+        this.geminiClient = new GoogleGenAI({ apiKey });
       }
-      this.modelName = options.model || process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-001';
+      this.modelName = options.model || process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-2';
     }
   }
 
@@ -63,10 +63,9 @@ export class EmbeddingService {
       if (!apiKey || apiKey.startsWith('placeholder')) {
         throw new Error('GEMINI_API_KEY is not configured. Please set your Gemini API key in environment variables.');
       }
-      this.geminiClient = new GoogleGenerativeAI(apiKey);
+      this.geminiClient = new GoogleGenAI({ apiKey });
     }
 
-    const model = this.geminiClient.getGenerativeModel({ model: this.modelName });
     const results: number[][] = [];
     const BATCH_SIZE = 5; // Process in small concurrent batches
 
@@ -80,21 +79,31 @@ export class EmbeddingService {
         try {
           attempts++;
           const promises = batch.map((text) =>
-            model.embedContent({
-              content: { role: 'user', parts: [{ text: text.slice(0, 8000) }] },
-              outputDimensionality: 768,
+            this.geminiClient!.models.embedContent({
+              model: this.modelName,
+              contents: text.slice(0, 8000),
+              config: {
+                outputDimensionality: 768,
+              },
             })
           );
 
           const responses = await Promise.all(promises);
 
           for (const res of responses) {
-            results.push(res.embedding.values);
+            const values = res.embeddings?.[0]?.values;
+
+            if (!values) {
+              throw new Error('Failed to generate Gemini embedding');
+            }
+
+            results.push(values);
           }
           success = true;
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
           if (attempts >= 3) {
-            throw new Error(`Gemini embedding batch failed after 3 attempts: ${error.message}`);
+            throw new Error(`Gemini embedding batch failed after 3 attempts: ${message}`);
           }
           await new Promise((res) => setTimeout(res, 1000 * attempts));
         }
@@ -134,9 +143,10 @@ export class EmbeddingService {
             results.push(item.embedding);
           }
           success = true;
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
           if (attempts >= 3) {
-            throw new Error(`OpenAI embedding batch failed after 3 attempts: ${error.message}`);
+            throw new Error(`OpenAI embedding batch failed after 3 attempts: ${message}`);
           }
           await new Promise((res) => setTimeout(res, 1000 * attempts));
         }

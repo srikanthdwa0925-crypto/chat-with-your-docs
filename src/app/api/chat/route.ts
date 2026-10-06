@@ -8,7 +8,7 @@ import { chatRequestSchema } from '@/lib/validation/schemas';
 import { defaultEmbeddingService } from '@/lib/ai/embeddingService';
 import { performVectorSearch } from '@/lib/rag/vectorSearch';
 import { buildRagContext } from '@/lib/rag/contextBuilder';
-import { defaultLLMService, ChatMessageInput } from '@/lib/ai/llmService';
+import { defaultLLMService, ChatMessageInput, formatProviderError } from '@/lib/ai/llmService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -200,10 +200,10 @@ export async function POST(request: NextRequest) {
           }
 
           controller.close();
-        } catch (err: any) {
+        } catch (err: unknown) {
           const errorEvent = `data: ${JSON.stringify({
             type: 'error',
-            message: err.message || 'Stream generation failed',
+            message: formatProviderError(err) || 'Stream generation failed',
           })}\n\n`;
           controller.enqueue(encoder.encode(errorEvent));
           controller.close();
@@ -218,7 +218,11 @@ export async function POST(request: NextRequest) {
         Connection: 'keep-alive',
       },
     });
-  } catch (err: any) {
-    return errorResponse('INTERNAL_SERVER_ERROR', err.message || 'An unexpected error occurred.', 500);
+  } catch (err: unknown) {
+    return errorResponse(
+      'INTERNAL_SERVER_ERROR',
+      formatProviderError(err) || 'An unexpected error occurred.',
+      500
+    );
   }
 }

@@ -167,8 +167,11 @@ export function ChatWindow({
             } else if (event.type === 'error') {
               throw new Error(event.message);
             }
-          } catch {
-            // Ignore parse errors on partial chunks
+          } catch (eventError) {
+            if (eventError instanceof SyntaxError) {
+              continue;
+            }
+            throw eventError;
           }
         }
       }
@@ -188,7 +191,22 @@ export function ChatWindow({
       ]);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        setError(err.message || 'An error occurred while generating response.');
+        const raw = err.message || 'An error occurred while generating response.';
+        let display = raw;
+        try {
+          const parsed = JSON.parse(raw);
+          display = parsed.error?.message || parsed.message || raw;
+          if (typeof display === 'string' && display.trim().startsWith('{')) {
+            const nested = JSON.parse(display);
+            display = nested.error?.message || display;
+          }
+        } catch {
+          const match = raw.match(/This model is currently experiencing high demand[^"]*/i);
+          if (match) {
+            display = 'Gemini is busy right now. Please try again in a moment.';
+          }
+        }
+        setError(display);
       }
     } finally {
       setStreaming(false);
